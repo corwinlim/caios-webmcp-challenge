@@ -253,7 +253,7 @@ export function createSyntheticPikaTools(
       },
       annotations: {
         readOnlyHint: false,
-        destructiveHint: false,
+        destructiveHint: true,
         idempotentHint: false,
       },
       execute: async (input) => {
