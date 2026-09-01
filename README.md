@@ -2,6 +2,8 @@
 
 An isolated, synthetic-data WebMCP demo for **The WebMCP Challenge**.
 
+**Live demo:** [caios-webmcp-challenge.vercel.app](https://caios-webmcp-challenge.vercel.app)
+
 CAIOS WebMCP Agent Gateway lets a person and an AI agent inspect the same synthetic pet-care page, preview a structured daily check-in, explicitly confirm it, commit it to browser-only demo storage, and verify the result together.
 
 > **Synthetic demo only.** This repository contains no production CAIOS API, customer record, real pet record, private prompt, proprietary memory/context engine, nutrition reasoning, clinical logic, database schema, or authentication secret.
@@ -23,7 +25,7 @@ The fourth tool is read-only and returns a payload-bound confirmation token. The
 Requirements: Node.js 20 or newer.
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
