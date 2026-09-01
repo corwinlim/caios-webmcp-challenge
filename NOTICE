@@ -1,0 +1,14 @@
+CAIOS WebMCP Agent Gateway
+Copyright 2026 Absolute Global Resources PLT
+
+This repository contains an isolated, synthetic-data hackathon demonstration.
+
+The Apache License 2.0 applies only to the files published in this repository.
+This repository does not contain or license the proprietary CAIOS production
+platform, production APIs, production databases, private prompts, memory and
+context engines, nutrition or clinical reasoning, customer information, real
+pet information, authentication material, or other unpublished technology.
+
+CAIOS and CaniBowl names, product identities, logos, and related brand assets
+are not licensed under Apache-2.0. No endorsement, affiliation, or official
+product status may be implied.
