@@ -30,7 +30,7 @@ describe("CAIOS WebMCP Agent Gateway", () => {
     const tools = createSyntheticPikaTools(memoryStorage());
 
     expect(tools).toHaveLength(5);
-    expect(new Set(tools.map((tool) => tool.name))).toHaveLength(5);
+    expect(new Set(tools.map((tool) => tool.name)).size).toBe(5);
     expect(tools.every((tool) => tool.description.toLowerCase().includes("synthetic"))).toBe(true);
   });
 
