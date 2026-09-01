@@ -10,13 +10,18 @@ import {
   STATE_CHANGED_EVENT,
 } from "./gateway";
 
-const root = document.querySelector<HTMLDivElement>("#app");
-if (!root) throw new Error("Missing #app root");
+const rootCandidate = document.querySelector<HTMLDivElement>("#app");
+if (!rootCandidate) throw new Error("Missing #app root");
+const root: HTMLDivElement = rootCandidate;
 
 const tools = createSyntheticPikaTools(window.localStorage);
-const previewTool = tools.find((tool) => tool.name === "preview_synthetic_pika_check_in");
-const commitTool = tools.find((tool) => tool.name === "commit_synthetic_pika_check_in");
-if (!previewTool || !commitTool) throw new Error("Synthetic tool contract is incomplete");
+function requireTool(name: string) {
+  const tool = tools.find((candidate) => candidate.name === name);
+  if (!tool) throw new Error(`Missing synthetic tool: ${name}`);
+  return tool;
+}
+const previewTool = requireTool("preview_synthetic_pika_check_in");
+const commitTool = requireTool("commit_synthetic_pika_check_in");
 
 let pendingPayload: Record<string, unknown> | null = null;
 let pendingToken: string | null = null;
