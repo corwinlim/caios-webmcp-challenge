@@ -25,6 +25,36 @@ const commitTool = requireTool("commit_synthetic_pika_check_in");
 
 let pendingPayload: Record<string, unknown> | null = null;
 let pendingToken: string | null = null;
+let previewDirty = false;
+let lastResult: unknown = null;
+let formPayload = {
+  appetite: "normal",
+  stoolScore: 5,
+  energy: "normal",
+  note: "Judge workflow",
+};
+
+function readFormPayload(form: HTMLFormElement) {
+  const data = new FormData(form);
+  return {
+    appetite: String(data.get("appetite")),
+    stoolScore: Number(data.get("stoolScore")),
+    energy: String(data.get("energy")),
+    note: String(data.get("note") ?? ""),
+  };
+}
+
+function populateForm(form: HTMLFormElement): void {
+  const appetite = form.elements.namedItem("appetite");
+  const stoolScore = form.elements.namedItem("stoolScore");
+  const energy = form.elements.namedItem("energy");
+  const note = form.elements.namedItem("note");
+
+  if (appetite instanceof HTMLSelectElement) appetite.value = formPayload.appetite;
+  if (stoolScore instanceof HTMLInputElement) stoolScore.value = String(formPayload.stoolScore);
+  if (energy instanceof HTMLSelectElement) energy.value = formPayload.energy;
+  if (note instanceof HTMLInputElement) note.value = formPayload.note;
+}
 
 function render(): void {
   const checkIns = readSyntheticCheckIns(window.localStorage);
@@ -105,7 +135,11 @@ function render(): void {
             </button>
           </div>
         </form>
-        <pre id="result" aria-live="polite">${pendingToken ? JSON.stringify({ preview: pendingPayload, confirmationRequired: true, confirmationToken: pendingToken }, null, 2) : "No pending preview."}</pre>
+        <pre id="result" aria-live="polite">${pendingToken
+          ? JSON.stringify({ preview: pendingPayload, confirmationRequired: true, confirmationToken: pendingToken }, null, 2)
+          : lastResult
+            ? JSON.stringify(lastResult, null, 2)
+            : "No pending preview."}</pre>
       </section>
 
       <section class="card">
@@ -133,15 +167,24 @@ function render(): void {
 
   const form = document.querySelector<HTMLFormElement>("#check-in-form");
   const result = document.querySelector<HTMLPreElement>("#result");
+  if (form) populateForm(form);
+
+  form?.addEventListener("input", () => {
+    formPayload = readFormPayload(form);
+    if (!pendingToken) return;
+
+    previewDirty = true;
+    const confirmButton = document.querySelector<HTMLButtonElement>("#confirm-button");
+    if (confirmButton) confirmButton.disabled = true;
+    if (result) result.textContent = "Preview invalidated because the form changed. Preview the updated payload before confirming.";
+  });
+
   form?.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const data = new FormData(form);
-    pendingPayload = {
-      appetite: data.get("appetite"),
-      stoolScore: Number(data.get("stoolScore")),
-      energy: data.get("energy"),
-      note: data.get("note"),
-    };
+    formPayload = readFormPayload(form);
+    pendingPayload = { ...formPayload };
+    previewDirty = false;
+    lastResult = null;
     try {
       const preview = await previewTool.execute(pendingPayload);
       pendingToken = String(preview.confirmationToken);
@@ -152,22 +195,33 @@ function render(): void {
   });
 
   document.querySelector("#confirm-button")?.addEventListener("click", async () => {
-    if (!pendingPayload || !pendingToken) return;
+    if (!pendingPayload || !pendingToken || previewDirty) return;
     const committed = await commitTool.execute({
       ...pendingPayload,
       confirmationToken: pendingToken,
     });
     pendingPayload = null;
     pendingToken = null;
+    previewDirty = false;
+    lastResult = {
+      ...committed,
+      message: "Check-in committed. The form still shows the exact committed payload; edit it and preview again to create another check-in.",
+    };
     render();
-    const updatedResult = document.querySelector<HTMLPreElement>("#result");
-    if (updatedResult) updatedResult.textContent = JSON.stringify(committed, null, 2);
   });
 
   document.querySelector("#reset-button")?.addEventListener("click", async () => {
     await commitTool.execute({ resetConfirmation: RESET_CONFIRMATION });
     pendingPayload = null;
     pendingToken = null;
+    previewDirty = false;
+    lastResult = null;
+    formPayload = {
+      appetite: "normal",
+      stoolScore: 5,
+      energy: "normal",
+      note: "Judge workflow",
+    };
     render();
   });
 }
