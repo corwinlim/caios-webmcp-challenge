@@ -8,6 +8,19 @@ CAIOS WebMCP Agent Gateway lets a person and an AI agent inspect the same synthe
 
 > **Synthetic demo only.** This repository contains no production CAIOS API, customer record, real pet record, private prompt, proprietary memory/context engine, nutrition reasoning, clinical logic, database schema, or authentication secret.
 
+## Why I built this
+
+I chose the name **CAIOS WebMCP Agent Gateway** because CAIOS is our startup
+project, and the gateway was my way to test whether WebMCP could turn a
+pet-care page into a safer shared workspace for people and agents. Before we
+adapt this pattern to real market needs, I wanted a small, inspectable build
+that could prove the interaction model without exposing production CAIOS
+technology or real pet data.
+
+Pika's everyday care made the test concrete: an agent may help structure a
+routine observation, but the person should still see exactly what will be
+recorded and remain in control of the write.
+
 ## Why WebMCP
 
 Pet-care pages contain useful context, but agents usually have to infer controls from the visual interface. This project exposes five narrow tools from the live page through `document.modelContext.registerTool(...)`, so the agent can act on the same state the person sees:
@@ -19,6 +32,21 @@ Pet-care pages contain useful context, but agents usually have to infer controls
 5. `commit_synthetic_pika_check_in`
 
 The fourth tool is read-only and returns a payload-bound confirmation token. The fifth rejects an unpreviewed or changed payload. Reset requires a separate exact confirmation phrase.
+
+## What I learned
+
+The most useful lesson was that exposing a tool is only half of the work. The
+human page and the agent must stay consistent around the same proposed action.
+During testing, we found a real UI bug: after preview, a re-render could reset
+the visible form to its defaults while the pending payload still held the
+earlier values. That could make the confirmation screen misleading even though
+the underlying token guard still worked.
+
+We fixed it by preserving the exact previewed values in the UI and
+invalidating confirmation whenever the form changes. This reinforced the main
+product principle behind the demo: WebMCP can give an agent useful capabilities,
+but consequential actions still need deterministic guards and visible human
+review.
 
 ## Run locally
 
