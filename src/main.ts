@@ -188,7 +188,7 @@ function render(): void {
           ${checkIns.length
             ? [...checkIns].reverse().map((item) => `
                 <article>
-                  <strong>Stool ${item.stoolScore} · Appetite ${item.appetite} · Energy ${item.energy}</strong>
+                  <strong>Stool ${escapeHtml(item.stoolScore)} · Appetite ${escapeHtml(item.appetite)} · Energy ${escapeHtml(item.energy)}</strong>
                   <span>${new Date(item.recordedAt).toLocaleString()}</span>
                   <p>${escapeHtml(item.note ?? "No note")}</p>
                 </article>`).join("")
