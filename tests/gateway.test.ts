@@ -132,6 +132,26 @@ describe("CAIOS WebMCP Agent Gateway", () => {
     expect(JSON.stringify(audit)).not.toContain("private-looking synthetic note");
   });
 
+  it("preserves a successful commit when receipt storage fails", async () => {
+    const base = memoryStorage();
+    const storage: StorageLike = {
+      ...base,
+      getItem: (key) => key.includes(":audit:") ? (() => { throw new Error("audit unavailable"); })() : base.getItem(key),
+      setItem: (key, value) => {
+        if (key.includes(":audit:")) throw new Error("audit unavailable");
+        base.setItem(key, value);
+      },
+    };
+    const tools = createSyntheticPikaTools(storage);
+    const preview = tools.find((tool) => tool.name === "preview_synthetic_pika_check_in")!;
+    const commit = tools.find((tool) => tool.name === "commit_synthetic_pika_check_in")!;
+    const payload = { appetite: "normal", stoolScore: 5, energy: "normal" };
+    const result = await preview.execute(payload);
+    await expect(commit.execute({ ...payload, confirmationToken: result.confirmationToken }))
+      .resolves.toMatchObject({ committed: true });
+    expect(base.getItem(STORAGE_KEY)).toContain("checkIns");
+  });
+
   it("rejects invalid or overlong health input", async () => {
     const preview = getTool(memoryStorage(), "preview_synthetic_pika_check_in");
 
