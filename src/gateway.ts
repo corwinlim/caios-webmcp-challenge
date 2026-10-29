@@ -5,6 +5,7 @@ export const SYNTHETIC_PIKA_ID = "synthetic-pika-hackathon";
 export const RESET_CONFIRMATION = "RESET_SYNTHETIC_PIKA_DEMO";
 export const STORAGE_KEY = "caios:webmcp-challenge:synthetic-pika:v1";
 export const STATE_CHANGED_EVENT = "caios-synthetic-state-changed";
+export const AUDIT_STORAGE_KEY = "caios:webmcp-challenge:synthetic-pika:audit:v1";
 
 export type CheckInPayload = {
   appetite: "normal" | "reduced" | "increased";
@@ -82,6 +83,58 @@ export function readSyntheticCheckIns(storage: StorageLike): SyntheticCheckIn[] 
   return readState(storage).checkIns;
 }
 
+export type ToolAuditEntry = {
+  id: string;
+  recordedAt: string;
+  tool: string;
+  status: "completed" | "rejected";
+  inputKeys: string[];
+  summary: string;
+};
+
+function readAuditState(storage: StorageLike): ToolAuditEntry[] {
+  const raw = storage.getItem(AUDIT_STORAGE_KEY);
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw) as { entries?: unknown };
+    return Array.isArray(parsed.entries) ? parsed.entries as ToolAuditEntry[] : [];
+  } catch {
+    return [];
+  }
+}
+
+export function readSyntheticToolAudit(storage: StorageLike): ToolAuditEntry[] {
+  return readAuditState(storage);
+}
+
+function recordToolAudit(
+  storage: StorageLike,
+  now: () => Date,
+  tool: string,
+  status: ToolAuditEntry["status"],
+  input: Record<string, unknown>,
+  summary: string,
+): ToolAuditEntry {
+  const entries = readAuditState(storage);
+  const recordedAt = now().toISOString();
+  const entry: ToolAuditEntry = {
+    id: `synthetic-tool-receipt-${recordedAt}-${entries.length + 1}`,
+    recordedAt,
+    tool,
+    status,
+    inputKeys: Object.keys(input).sort(),
+    summary,
+  };
+
+  storage.setItem(
+    AUDIT_STORAGE_KEY,
+    JSON.stringify({ entries: [...entries, entry].slice(-20) }),
+  );
+  notifyStateChanged();
+  return entry;
+}
+
 function parsePayload(input: Record<string, unknown>): CheckInPayload {
   const appetite = String(input.appetite);
   const stoolScore = Number(input.stoolScore);
@@ -141,7 +194,7 @@ export function createSyntheticPikaTools(
   storage: StorageLike,
   now: () => Date = () => new Date(),
 ): SiteTool[] {
-  return [
+  const tools: SiteTool[] = [
     {
       name: "get_synthetic_pika_profile",
       description:
@@ -300,6 +353,34 @@ export function createSyntheticPikaTools(
       },
     },
   ];
+
+  return tools.map((tool) => ({
+    ...tool,
+    execute: async (input) => {
+      try {
+        const result = await tool.execute(input);
+        const receipt = recordToolAudit(
+          storage,
+          now,
+          tool.name,
+          "completed",
+          input,
+          "Tool completed against isolated synthetic browser state.",
+        );
+        return { ...result, toolReceipt: receipt };
+      } catch (error) {
+        recordToolAudit(
+          storage,
+          now,
+          tool.name,
+          "rejected",
+          input,
+          error instanceof Error ? error.message : "Tool rejected.",
+        );
+        throw error;
+      }
+    },
+  }));
 }
 
 export async function registerSyntheticPikaTools(
