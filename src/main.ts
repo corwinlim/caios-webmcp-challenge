@@ -61,6 +61,10 @@ function populateForm(form: HTMLFormElement): void {
   if (note instanceof HTMLInputElement) note.value = formPayload.note;
 }
 
+function escapeHtml(value: unknown): string {
+  return String(value).replace(/[&<>"\']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "\'": "&#39;" })[char] ?? char);
+}
+
 function receiptMarkup(entries: ToolAuditEntry[]): string {
   if (!entries.length) {
     return '<p class="empty">No tool calls recorded yet. Run the workflow from an agent or from this visible page.</p>';
@@ -68,10 +72,10 @@ function receiptMarkup(entries: ToolAuditEntry[]): string {
 
   return entries.map((entry) => {
     const outcome = entry.status === "completed" ? "COMPLETED" : "REJECTED";
-    return `<article class="${entry.status}">
-      <div><strong>${outcome}</strong><code>${entry.tool}</code></div>
-      <span>${new Date(entry.recordedAt).toLocaleString()} · inputs: ${entry.inputKeys.join(", ") || "none"}</span>
-      <p>${entry.summary}</p>
+    return `<article class="${escapeHtml(entry.status)}">
+      <div><strong>${outcome}</strong><code>${escapeHtml(entry.tool)}</code></div>
+      <span>${new Date(entry.recordedAt).toLocaleString()} · inputs: ${escapeHtml(Array.isArray(entry.inputKeys) ? entry.inputKeys.join(", ") : "none")}</span>
+      <p>${escapeHtml(entry.summary)}</p>
     </article>`;
   }).join("");
 }
@@ -164,9 +168,9 @@ function render(): void {
           </div>
         </form>
         <pre id="result" aria-live="polite">${pendingToken
-          ? JSON.stringify({ preview: pendingPayload, confirmationRequired: true, confirmationToken: pendingToken }, null, 2)
+          ? escapeHtml(JSON.stringify({ preview: pendingPayload, confirmationRequired: true, confirmationToken: pendingToken }, null, 2))
           : lastResult
-            ? JSON.stringify(lastResult, null, 2)
+            ? escapeHtml(JSON.stringify(lastResult, null, 2))
             : "No pending preview."}</pre>
       </section>
 
@@ -186,7 +190,7 @@ function render(): void {
                 <article>
                   <strong>Stool ${item.stoolScore} · Appetite ${item.appetite} · Energy ${item.energy}</strong>
                   <span>${new Date(item.recordedAt).toLocaleString()}</span>
-                  <p>${item.note ?? "No note"}</p>
+                  <p>${escapeHtml(item.note ?? "No note")}</p>
                 </article>`).join("")
             : '<p class="empty">No synthetic check-ins yet. Preview and confirm one with the page or an agent.</p>'}
         </div>
