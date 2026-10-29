@@ -45,8 +45,7 @@ Show that the write fails closed because it was not previewed and confirmed.
 Ask the agent to preview the same payload with
 `preview_synthetic_pika_check_in`.
 
-Read the preview and explain that the returned token is cryptographically
-lightweight but payload-bound: changing any field invalidates it.
+Read the preview and explain that the returned token is **deterministically payload-bound**: changing any field invalidates it. It is a demo guard, not a cryptographic authorization mechanism.
 
 After the person reviews the proposal, ask the agent to call
 `commit_synthetic_pika_check_in` with the unchanged payload and returned
@@ -54,8 +53,7 @@ token.
 
 ## 2:10–2:40 — Shared verification
 
-Show that the visible page updates. Ask the agent to read Today and Events
-again. The person and agent now see the same committed browser-only state.
+Show the visible page update and the new **Visible tool receipts** row: first the rejected direct write, then preview, then the confirmed commit. Ask the agent to read Today and Events again. The person and agent now see the same committed browser-only state.
 
 ## 2:40–3:00 — Why WebMCP
 
@@ -72,8 +70,8 @@ Close on:
 
 - Public demo URL visible.
 - Site tools panel and all five tool names visible.
-- Failed unconfirmed write visible.
+- Failed unconfirmed write visible, including its rejected tool receipt.
 - Preview token visible without exposing any secret.
-- Successful confirmed write and visible verification shown.
+- Successful confirmed write, completed tool receipt, and visible verification shown.
 - Audio narration included.
 - Total duration under three minutes.
