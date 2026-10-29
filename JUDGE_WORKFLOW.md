@@ -45,7 +45,7 @@ Show that the write fails closed because it was not previewed and confirmed.
 Ask the agent to preview the same payload with
 `preview_synthetic_pika_check_in`.
 
-Read the preview and explain that the returned token is **deterministically payload-bound**: changing any field invalidates it. It is a demo guard, not a cryptographic authorization mechanism.
+Read the preview and explain that the returned token is **deterministically payload-bound**: changing any field invalidates it. It is a demo guard, not a cryptographic authorization mechanism. The token is returned to the agent, so this does not prove a human approved the action. Receipts are editable browser-local demo traces, not tamper-proof audit records.
 
 After the person reviews the proposal, ask the agent to call
 `commit_synthetic_pika_check_in` with the unchanged payload and returned
