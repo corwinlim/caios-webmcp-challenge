@@ -127,11 +127,12 @@ function recordToolAudit(
     summary,
   };
 
-  storage.setItem(
-    AUDIT_STORAGE_KEY,
-    JSON.stringify({ entries: [...entries, entry].slice(-20) }),
-  );
-  notifyStateChanged();
+  try {
+    storage.setItem(AUDIT_STORAGE_KEY, JSON.stringify({ entries: [...entries, entry].slice(-20) }));
+    notifyStateChanged();
+  } catch {
+    // Receipts are best-effort; never turn a successful write into a reported failure.
+  }
   return entry;
 }
 
@@ -375,7 +376,7 @@ export function createSyntheticPikaTools(
           tool.name,
           "rejected",
           input,
-          error instanceof Error ? error.message : "Tool rejected.",
+          "Tool rejected. See the tool response for details.",
         );
         throw error;
       }
