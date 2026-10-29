@@ -5,7 +5,9 @@ import "./style.css";
 import {
   createSyntheticPikaTools,
   readSyntheticCheckIns,
+  readSyntheticToolAudit,
   registerSyntheticPikaTools,
+  type ToolAuditEntry,
   RESET_CONFIRMATION,
   STATE_CHANGED_EVENT,
 } from "./gateway";
@@ -27,6 +29,9 @@ let pendingPayload: Record<string, unknown> | null = null;
 let pendingToken: string | null = null;
 let previewDirty = false;
 let lastResult: unknown = null;
+let webmcpStatus: "checking" | "registered" | "unavailable" | "failed" =
+  typeof document.modelContext?.registerTool === "function" ? "checking" : "unavailable";
+
 let formPayload = {
   appetite: "normal",
   stoolScore: 5,
@@ -56,14 +61,41 @@ function populateForm(form: HTMLFormElement): void {
   if (note instanceof HTMLInputElement) note.value = formPayload.note;
 }
 
+function escapeHtml(value: unknown): string {
+  return String(value).replace(/[&<>"\']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "\'": "&#39;" })[char] ?? char);
+}
+
+function receiptMarkup(entries: ToolAuditEntry[]): string {
+  if (!entries.length) {
+    return '<p class="empty">No tool calls recorded yet. Run the workflow from an agent or from this visible page.</p>';
+  }
+
+  return entries.map((entry) => {
+    const outcome = entry.status === "completed" ? "COMPLETED" : "REJECTED";
+    return `<article class="${escapeHtml(entry.status)}">
+      <div><strong>${outcome}</strong><code>${escapeHtml(entry.tool)}</code></div>
+      <span>${new Date(entry.recordedAt).toLocaleString()} · inputs: ${escapeHtml(Array.isArray(entry.inputKeys) ? entry.inputKeys.join(", ") : "none")}</span>
+      <p>${escapeHtml(entry.summary)}</p>
+    </article>`;
+  }).join("");
+}
 function render(): void {
   const checkIns = readSyntheticCheckIns(window.localStorage);
   const latest = checkIns.at(-1);
+  const auditEntries = readSyntheticToolAudit(window.localStorage).slice(-6).reverse();
+  const runtimeLabel = webmcpStatus === "registered"
+    ? "WebMCP tools registered"
+    : webmcpStatus === "checking"
+      ? "Registering WebMCP tools"
+      : webmcpStatus === "unavailable"
+        ? "Human UI available · WebMCP unavailable in this browser"
+        : "WebMCP registration failed · human UI remains available";
 
   root.innerHTML = `
     <header class="hero">
       <div class="brand">CAIOS <span>WebMCP Agent Gateway</span></div>
       <div class="badge">SYNTHETIC HACKATHON BUILD</div>
+      <div class="runtime-status ${webmcpStatus}" role="status">${runtimeLabel}</div>
       <h1>One pet-care page.<br />One shared state for people and agents.</h1>
       <p class="lede">
         Explore a safe WebMCP workflow with fictional Pika data:
@@ -136,10 +168,17 @@ function render(): void {
           </div>
         </form>
         <pre id="result" aria-live="polite">${pendingToken
-          ? JSON.stringify({ preview: pendingPayload, confirmationRequired: true, confirmationToken: pendingToken }, null, 2)
+          ? escapeHtml(JSON.stringify({ preview: pendingPayload, confirmationRequired: true, confirmationToken: pendingToken }, null, 2))
           : lastResult
-            ? JSON.stringify(lastResult, null, 2)
+            ? escapeHtml(JSON.stringify(lastResult, null, 2))
             : "No pending preview."}</pre>
+      </section>
+
+      <section class="card evidence">
+        <div class="eyebrow">Visible tool receipts</div>
+        <h2>What the page recorded</h2>
+        <p class="evidence-lede">Every completed or rejected tool call leaves a browser-only, synthetic receipt. This is an execution trace, not a clinical record.</p>
+        <div class="receipts">${receiptMarkup(auditEntries)}</div>
       </section>
 
       <section class="card">
@@ -149,9 +188,9 @@ function render(): void {
           ${checkIns.length
             ? [...checkIns].reverse().map((item) => `
                 <article>
-                  <strong>Stool ${item.stoolScore} · Appetite ${item.appetite} · Energy ${item.energy}</strong>
+                  <strong>Stool ${escapeHtml(item.stoolScore)} · Appetite ${escapeHtml(item.appetite)} · Energy ${escapeHtml(item.energy)}</strong>
                   <span>${new Date(item.recordedAt).toLocaleString()}</span>
-                  <p>${item.note ?? "No note"}</p>
+                  <p>${escapeHtml(item.note ?? "No note")}</p>
                 </article>`).join("")
             : '<p class="empty">No synthetic check-ins yet. Preview and confirm one with the page or an agent.</p>'}
         </div>
@@ -232,7 +271,11 @@ window.addEventListener(STATE_CHANGED_EVENT, render);
 if (typeof document.modelContext?.registerTool === "function") {
   void registerSyntheticPikaTools(document.modelContext, tools).then(() => {
     document.documentElement.dataset.webmcp = "registered";
+    webmcpStatus = "registered";
+    render();
   }).catch((error: unknown) => {
+    webmcpStatus = "failed";
+    render();
     console.warn("WebMCP registration failed; the human interface remains available.", error);
   });
 }

@@ -21,6 +21,11 @@ button, input, select { font: inherit; }
 .brand span { color: #69766f; font-weight: 650; }
 .badge, .eyebrow { color: var(--green); font-size: .72rem; font-weight: 850; letter-spacing: .13em; text-transform: uppercase; }
 .badge { display: inline-block; margin-top: 38px; padding: 8px 12px; border: 1px solid #a9c3b7; border-radius: 999px; background: #edf5ef; }
+.runtime-status { display: inline-flex; align-items: center; margin: 14px 0 0 10px; padding: 8px 12px; border-radius: 999px; color: #53635c; background: #ece9df; font-size: .75rem; font-weight: 750; }
+.runtime-status.registered { color: #174333; background: #dcebe2; }
+.runtime-status.checking { color: #6f4b1f; background: #fff0d7; }
+.runtime-status.failed { color: #803c31; background: #f7e1dc; }
+.runtime-status.unavailable { color: #53635c; background: #ece9df; }
 h1 { max-width: 820px; margin: 18px 0; color: var(--green-dark); font-family: Georgia, serif; font-size: clamp(2.6rem, 7vw, 5.6rem); line-height: .98; letter-spacing: -.05em; }
 .lede { max-width: 730px; color: #53635c; font-size: 1.12rem; line-height: 1.65; }
 .boundary { margin-top: 24px; padding: 15px 18px; border-left: 4px solid var(--orange); background: #fff6e8; border-radius: 0 10px 10px 0; }
@@ -56,6 +61,16 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 .text-button { margin-top: 16px; padding-left: 0; border: 0; color: #995522; background: transparent; }
 pre { grid-column: 1 / -1; max-height: 230px; overflow: auto; margin: 6px 0 0; padding: 14px; border-radius: 10px; color: #d9f0e5; background: #17372d; font-size: .76rem; white-space: pre-wrap; }
 .count { display: inline-grid; min-width: 30px; height: 30px; place-items: center; border-radius: 999px; color: var(--green); background: #deebe4; font: 800 .85rem Inter, sans-serif; }
+.evidence-lede { max-width: 720px; color: #65736c; line-height: 1.6; }
+.receipts { display: grid; gap: 10px; }
+.receipts article { padding: 14px; border-left: 3px solid #315d4c; background: #f0eee7; }
+.receipts article.rejected { border-left-color: #b35d45; background: #fff0eb; }
+.receipts article div { display: flex; align-items: center; gap: 10px; }
+.receipts strong { color: #315d4c; font-size: .67rem; letter-spacing: .08em; }
+.receipts article.rejected strong { color: #99412f; }
+.receipts code { color: #183c31; font-size: .78rem; overflow-wrap: anywhere; }
+.receipts span { display: block; margin-top: 5px; color: #6a7770; font-size: .76rem; }
+.receipts p { margin: 8px 0 0; color: #53635c; font-size: .86rem; }
 .timeline { display: grid; gap: 10px; }
 .timeline article { padding: 14px; border-left: 3px solid var(--green); background: #f0eee7; }
 .timeline article span { display: block; margin-top: 4px; color: #6a7770; font-size: .78rem; }
