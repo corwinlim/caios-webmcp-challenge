@@ -116,7 +116,8 @@ function recordToolAudit(
   input: Record<string, unknown>,
   summary: string,
 ): ToolAuditEntry {
-  const entries = readAuditState(storage);
+  let entries: ToolAuditEntry[] = [];
+  try { entries = readAuditState(storage); } catch { /* storage unavailable */ }
   const recordedAt = now().toISOString();
   const entry: ToolAuditEntry = {
     id: `synthetic-tool-receipt-${recordedAt}-${entries.length + 1}`,
